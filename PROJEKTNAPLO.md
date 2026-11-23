@@ -5,7 +5,7 @@
 | Név vagy GitHub-felhasználónév | Vállalt feladatok és szerep | Saját menüfunkció |
 | --- | --- | --- |
 |Jákób Levente |  Alakzatok rajzolása, Alakzatok ellenőrzése, Szövegfájl betöltése |  A Dusza Árpád Országos Programozói Emlékversenyre való tekintettel a saját menüfunkcióra nem jutott időm |
-
+|Nagy Nándor | | |
 ## Közös megállapodások
 
 - A rajzlap mérete és helye: 
