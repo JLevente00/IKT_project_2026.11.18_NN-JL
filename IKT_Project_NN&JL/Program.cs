@@ -80,7 +80,7 @@ sealed class Rajzolo
     private bool _menuNyitva = false;
     private int _menuValasztas = 0;
     private string _hibaUzenet = "";
-    private string _uzenet = "M: menu | Nyilak: mozgas | Szokoz: eszkoz | F1-F3: X nyomda";
+    private string _uzenet = "M: menu | Nyilak: mozgas | Szokoz: eszkoz | F1-F12: nyomdak";
 
     private readonly string[] _menuPontok =
     {
@@ -232,7 +232,7 @@ sealed class Rajzolo
             case ConsoleKey.Escape:
                 _menuNyitva = false;
                 _hibaUzenet = "";
-                _uzenet = "Rajzolas: nyilak | Szokoz: eszkoz | F1-F3: X nyomda";
+                _uzenet = "Rajzolas: nyilak | Szokoz: eszkoz | F1-F12: nyomdak";
                 break;
 
             case ConsoleKey.Enter:
@@ -518,6 +518,9 @@ sealed class Rajzolo
         KiirPanelSort(13, "Nyilak: mozgas");
         KiirPanelSort(14, "Szokoz: eszkoz");
         KiirPanelSort(15, "F1-F3: X");
+        KiirPanelSort(16, "F4-F6: Kereszt");
+        KiirPanelSort(17, "F7-F9: Negyzetkeret");
+        KiirPanelSort(18, "F10-F12: Rombuszkeret");
         KiirPanelSort(20, "M: menu");
     }
 
@@ -589,16 +592,28 @@ sealed class Rajzolo
             if (_menuNyitva)
                 continue;
 
+            ConsoleKey gomb = billentyu.Key;
             int meret = 0;
-            if (billentyu.Key == ConsoleKey.F1)
+            if (gomb == ConsoleKey.F1 || gomb == ConsoleKey.F4 ||
+                gomb == ConsoleKey.F7 || gomb == ConsoleKey.F10)
                 meret = 3;
-            if (billentyu.Key == ConsoleKey.F2)
+            else if (gomb == ConsoleKey.F2 || gomb == ConsoleKey.F5 ||
+                     gomb == ConsoleKey.F8 || gomb == ConsoleKey.F11)
                 meret = 5;
-            if (billentyu.Key == ConsoleKey.F3)
+            else if (gomb == ConsoleKey.F3 || gomb == ConsoleKey.F6 ||
+                     gomb == ConsoleKey.F9 || gomb == ConsoleKey.F12)
                 meret = 7;
 
             if (meret == 0)
                 continue;
+
+            string alakzat = "X";
+            if (gomb == ConsoleKey.F4 || gomb == ConsoleKey.F5 || gomb == ConsoleKey.F6)
+                alakzat = "kereszt";
+            else if (gomb == ConsoleKey.F7 || gomb == ConsoleKey.F8 || gomb == ConsoleKey.F9)
+                alakzat = "negyzetkeret";
+            else if (gomb == ConsoleKey.F10 || gomb == ConsoleKey.F11 || gomb == ConsoleKey.F12)
+                alakzat = "rombuszkeret";
 
             int sugar = meret / 2;
             if (_x - sugar < 0 || _x + sugar >= _rajzlapSzelesseg ||
@@ -609,41 +624,50 @@ sealed class Rajzolo
                 continue;
             }
 
-         
-            for (int elteres = -sugar; elteres <= sugar; elteres++)
+            for (int dy = -sugar; dy <= sugar; dy++)
             {
-                int celY = _y + elteres;
-                int elsoX = _x + elteres;
-                int masodikX = _x - elteres;
-
-                _karakterek[celY, elsoX] = _aktualisKarakter;
-                _szinek[celY, elsoX] = _aktualisSzin;
-                Console.ForegroundColor = _aktualisSzin;
-                if (elteres == 0)
+                for (int dx = -sugar; dx <= sugar; dx++)
                 {
-                    Console.BackgroundColor = ConsoleColor.White;
-                    Console.ForegroundColor = ConsoleColor.Black;
-                }
-                Console.SetCursorPosition(RajzlapKezdoOszlop + elsoX, celY + 1);
-                Console.Write(_aktualisKarakter);
+                    // Hány cellára van a pont a kurzortól vízszintesen és függőlegesen?
+                    int tavX = Math.Abs(dx);
+                    int tavY = Math.Abs(dy);
+                    bool jelolt = false;
 
-            
-                if (elteres != 0)
-                {
-                    _karakterek[celY, masodikX] = _aktualisKarakter;
-                    _szinek[celY, masodikX] = _aktualisSzin;
-                    Console.SetCursorPosition(RajzlapKezdoOszlop + masodikX, celY + 1);
+                    if (alakzat == "X")
+                        jelolt = tavX == tavY;
+                    else if (alakzat == "kereszt")
+                        jelolt = dx == 0 || dy == 0;
+                    else if (alakzat == "negyzetkeret")
+                        jelolt = tavX == sugar || tavY == sugar;
+                    else if (alakzat == "rombuszkeret")
+                        jelolt = tavX + tavY == sugar;
+
+                    if (!jelolt)
+                        continue;
+
+                    int celX = _x + dx;
+                    int celY = _y + dy;
+                    _karakterek[celY, celX] = _aktualisKarakter;
+                    _szinek[celY, celX] = _aktualisSzin;
+
+                    Console.ForegroundColor = _aktualisSzin;
+                    if (dx == 0 && dy == 0)
+                    {
+                        Console.BackgroundColor = ConsoleColor.White;
+                        Console.ForegroundColor = ConsoleColor.Black;
+                    }
+                    Console.SetCursorPosition(RajzlapKezdoOszlop + celX, celY + 1);
                     Console.Write(_aktualisKarakter);
+                    Console.ResetColor();
                 }
-
-                Console.ResetColor();
             }
 
             _hibaUzenet = "";
-            _uzenet = $"{meret}x{meret}-es X nyomda elhelyezve.";
+            _uzenet = $"{meret}x{meret}-es {alakzat} nyomda elhelyezve.";
             Console.SetCursorPosition(0, Console.WindowHeight - AlsoSegedSorok + 1);
             Console.ForegroundColor = ConsoleColor.Gray;
-            Console.Write(_uzenet.PadRight(Console.WindowWidth - 1));
+            int statuszSzelesseg = Console.WindowWidth - 1;
+            Console.Write(_uzenet.PadRight(statuszSzelesseg).Substring(0, statuszSzelesseg));
             Console.ResetColor();
             Console.SetCursorPosition(RajzlapKezdoOszlop + _x, _y + 1);
         }
