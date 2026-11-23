@@ -29,6 +29,7 @@
 
 Aki használt AI-t, írja le a nevét, miben kért segítséget, és mit tanult meg belőle.
 
-- Név: …
-- Miben kértem segítséget: …
-- Mit tanultam meg: …
+- Név: Jákób Levente
+- Miben kértem segítség: A másik fél munkájának ellenőrzése/megértése, a munkák felosztása, váltizónevek, clean kód ellenörzése/apróbb jaavítások(pl helyesírás, gépelési hiba)
+- Mit tanultam meg: -A munkák felosztása: 2 fő résznek kell lennie egy "grafikus felületért/kinézetért felelős ember" a másik pedig a kód logikájáért felelős ember, ezen feladtkörök pontosítása, és hogy pontosan mi melyik katefóriábaa tartozik
+

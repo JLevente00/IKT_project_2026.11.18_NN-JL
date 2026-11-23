@@ -1,14 +1,6 @@
 ﻿// ============================================================================
 // KONZOLOS RAJZOLO
-// .NET 8 konzolalkalmazas
-//
-// A program a feladatkiiras kovetelmenyeit valositja meg:
-// - bal oldali menu es allapotpanel, jobb oldali rajzlap;
-// - szabadkezes rajzolas felemelt/letett eszkozzel;
-// - karakter- es szinvalasztas;
-// - 12 fele nyomda (X, kereszt, negyzetkeret, rombuszkeret);
-// - szovegfajl betoltese elozetes meretellenorzessel;
-// - ket sajat menufunkcio: aktualis cella torlese es ugras kozepre.
+// 1-es tanuló – Felület, kurzor, menü, szabadkézi rajzolás és cellatörlés.
 //
 // Fontos: a Console.SetCursorPosition parameterei (oszlop, sor) sorrendben
 // ertendoek. A sajat rajzlapon beluli koordinatak viszont (x, y), ahol
@@ -16,7 +8,6 @@
 // ============================================================================
 
 using System;
-using System.IO;
 using System.Text;
 
 Console.OutputEncoding = Encoding.UTF8;
@@ -69,8 +60,6 @@ sealed class Rajzolo
     private const int AlsoSegedSorok = 3;
 
     // A rajzlap minden cellajahoz eltároljuk a karaktert es a szinet.
-    // A szin kulon tarolasa miatt a betoltott fajl es a nyomdak is
-    // meg tudjak orizni a mar meglevo rajz szineit.
     private char[,] _karakterek;
     private ConsoleColor[,] _szinek;
 
@@ -91,15 +80,13 @@ sealed class Rajzolo
     private bool _menuNyitva = false;
     private int _menuValasztas = 0;
     private string _hibaUzenet = "";
-    private string _uzenet = "M: menu | Nyilak: mozgas | Szokoz: eszkoz | F1-F12: nyomdak";
+    private string _uzenet = "M: menu | Nyilak: mozgas | Szokoz: eszkoz | F1-F3: X nyomda";
 
     private readonly string[] _menuPontok =
     {
         "Karakter valasztasa",
         "Szin valasztasa",
-        "Minta betoltese",
         "Aktualis cella torlese",
-        "Ugras kozepre",
         "Kilepes"
     };
 
@@ -153,29 +140,6 @@ sealed class Rajzolo
             throw new InvalidOperationException("Tul kicsi a konzolablak.");
     }
 
-    public void Futtatas()
-    {
-        Megjelenites();
-
-        bool fut = true;
-        while (fut)
-        {
-            ConsoleKeyInfo billentyu = Console.ReadKey(true);
-
-            if (_menuNyitva)
-            {
-                fut = MenuBillentyuKezelese(billentyu);
-            }
-            else
-            {
-                fut = RajzBillentyuKezelese(billentyu);
-            }
-
-            if (fut)
-                Megjelenites();
-        }
-    }
-
     // ------------------------------------------------------------------------
     // Rajzolas kozbeni billentyuk kezelese
     // ------------------------------------------------------------------------
@@ -209,46 +173,6 @@ sealed class Rajzolo
                 _uzenet = _eszkozLeteve
                     ? "Az eszkoz LETEVE: a mozgas rajzol."
                     : "Az eszkoz FELEMELVE: a mozgas nem rajzol.";
-                break;
-
-            case ConsoleKey.F1:
-                NyomdaAlkalmazasa(3, NyomdaTipus.X);
-                break;
-            case ConsoleKey.F2:
-                NyomdaAlkalmazasa(5, NyomdaTipus.X);
-                break;
-            case ConsoleKey.F3:
-                NyomdaAlkalmazasa(7, NyomdaTipus.X);
-                break;
-
-            case ConsoleKey.F4:
-                NyomdaAlkalmazasa(3, NyomdaTipus.Kereszt);
-                break;
-            case ConsoleKey.F5:
-                NyomdaAlkalmazasa(5, NyomdaTipus.Kereszt);
-                break;
-            case ConsoleKey.F6:
-                NyomdaAlkalmazasa(7, NyomdaTipus.Kereszt);
-                break;
-
-            case ConsoleKey.F7:
-                NyomdaAlkalmazasa(3, NyomdaTipus.Negyzetkeret);
-                break;
-            case ConsoleKey.F8:
-                NyomdaAlkalmazasa(5, NyomdaTipus.Negyzetkeret);
-                break;
-            case ConsoleKey.F9:
-                NyomdaAlkalmazasa(7, NyomdaTipus.Negyzetkeret);
-                break;
-
-            case ConsoleKey.F10:
-                NyomdaAlkalmazasa(3, NyomdaTipus.Rombuszkeret);
-                break;
-            case ConsoleKey.F11:
-                NyomdaAlkalmazasa(5, NyomdaTipus.Rombuszkeret);
-                break;
-            case ConsoleKey.F12:
-                NyomdaAlkalmazasa(7, NyomdaTipus.Rombuszkeret);
                 break;
 
             case ConsoleKey.M:
@@ -289,72 +213,6 @@ sealed class Rajzolo
     }
 
     // ------------------------------------------------------------------------
-    // Nyomdak
-    // ------------------------------------------------------------------------
-    private enum NyomdaTipus
-    {
-        X,
-        Kereszt,
-        Negyzetkeret,
-        Rombuszkeret
-    }
-
-    private void NyomdaAlkalmazasa(int meret, NyomdaTipus tipus)
-    {
-        int sugar = meret / 2;
-
-        // A teljes befoglalo negyzetet elore ellenorizzuk.
-        // Ha akar egy resze kilogna, a rajzlaphoz egyaltalan nem nyulunk.
-        if (_x - sugar < 0 ||
-            _y - sugar < 0 ||
-            _x + sugar >= _rajzlapSzelesseg ||
-            _y + sugar >= _rajzlapMagassag)
-        {
-            Hiba($"A {meret}x{meret}-es nyomda nem fer el ezen a helyen.");
-            return;
-        }
-
-        // Csak az ellenorzes utan kezdjuk el a cellak modositasat.
-        for (int dy = -sugar; dy <= sugar; dy++)
-        {
-            for (int dx = -sugar; dx <= sugar; dx++)
-            {
-                bool jelolt = tipus switch
-                {
-                    // X: a ket atlo cellai.
-                    NyomdaTipus.X =>
-                        Math.Abs(dx) == Math.Abs(dy),
-
-                    // Kereszt: a kozepso sor es oszlop.
-                    NyomdaTipus.Kereszt =>
-                        dx == 0 || dy == 0,
-
-                    // Negyzetkeret: a befoglalo negyzet negy szelső vonala.
-                    NyomdaTipus.Negyzetkeret =>
-                        Math.Abs(dx) == sugar || Math.Abs(dy) == sugar,
-
-                    // Rombusz: a negy oldalfelezo pontok kozotti keret.
-                    NyomdaTipus.Rombuszkeret =>
-                        Math.Abs(dx) + Math.Abs(dy) == sugar,
-
-                    _ => false
-                };
-
-                if (jelolt)
-                {
-                    int celX = _x + dx;
-                    int celY = _y + dy;
-                    CellabaIr(celX, celY, _aktualisKarakter, _aktualisSzin);
-                }
-            }
-        }
-
-        // A nyomda nem mozgatja a kurzort, es az eszkoz allapotat sem valtja.
-        _uzenet = $"{meret}x{meret}-es {tipus} nyomda elhelyezve.";
-        _hibaUzenet = "";
-    }
-
-    // ------------------------------------------------------------------------
     // Menu
     // ------------------------------------------------------------------------
     private bool MenuBillentyuKezelese(ConsoleKeyInfo billentyu)
@@ -374,7 +232,7 @@ sealed class Rajzolo
             case ConsoleKey.Escape:
                 _menuNyitva = false;
                 _hibaUzenet = "";
-                _uzenet = "Rajzolas: nyilak | Szokoz: eszkoz | F1-F12: nyomdak";
+                _uzenet = "Rajzolas: nyilak | Szokoz: eszkoz | F1-F3: X nyomda";
                 break;
 
             case ConsoleKey.Enter:
@@ -402,18 +260,10 @@ sealed class Rajzolo
                 break;
 
             case 2:
-                MintaBetoltese();
-                break;
-
-            case 3:
                 AktualisCellaTorlese();
                 break;
 
-            case 4:
-                UgrasKozepre();
-                break;
-
-            case 5:
+            case 3:
                 return false;
         }
 
@@ -489,7 +339,7 @@ sealed class Rajzolo
     }
 
     // ------------------------------------------------------------------------
-    // A ket sajat menufunkcio
+    // Aktualis cella torlese
     // ------------------------------------------------------------------------
     private void AktualisCellaTorlese()
     {
@@ -498,93 +348,6 @@ sealed class Rajzolo
         CellabaIr(_x, _y, ' ', ConsoleColor.Gray);
         _uzenet = "Az aktualis cella torolve.";
         _hibaUzenet = "";
-    }
-
-    private void UgrasKozepre()
-    {
-        // Ez pozicionalas, nem mozgas: nem rajzol akkor sem, ha az eszkoz le van teve.
-        _x = _rajzlapSzelesseg / 2;
-        _y = _rajzlapMagassag / 2;
-        _uzenet = "A kurzor a rajzlap kozepere ugrott.";
-        _hibaUzenet = "";
-    }
-
-    // ------------------------------------------------------------------------
-    // Fajlbetoltes
-    // ------------------------------------------------------------------------
-    private void MintaBetoltese()
-    {
-        Console.Clear();
-        Console.ResetColor();
-        Console.SetCursorPosition(0, 0);
-        Console.WriteLine("MINTA BETOLTESE");
-        Console.WriteLine("Add meg a szovegfajl eleresi utjat.");
-        Console.WriteLine("Relativ utvonal eseten a program mappajabol indulunk.");
-        Console.Write("Fajl utvonala (Esc helyett ures sor = megse): ");
-
-        string? megadottUtvonal = Console.ReadLine();
-
-        if (string.IsNullOrWhiteSpace(megadottUtvonal))
-        {
-            _uzenet = "A fajlbetoltest megszakitottad.";
-            return;
-        }
-
-        try
-        {
-            string utvonal = megadottUtvonal.Trim().Trim('"');
-
-            // Relativ utvonalnal a program inditasi mappaja az alap.
-            if (!Path.IsPathRooted(utvonal))
-                utvonal = Path.Combine(AppContext.BaseDirectory, utvonal);
-
-            // Eloszor minden sort beolvasunk. Eddig a pontig a rajz nem valtozik.
-            string[] sorok = File.ReadAllLines(utvonal);
-
-            // A teljes fajlt ellenorizzuk, mielott a regi rajzot torolnenk.
-            if (sorok.Length > _rajzlapMagassag)
-            {
-                Hiba($"A fajl {sorok.Length} sort tartalmaz, de csak {_rajzlapMagassag} fer el.");
-                return;
-            }
-
-            for (int i = 0; i < sorok.Length; i++)
-            {
-                if (sorok[i].Length > _rajzlapSzelesseg)
-                {
-                    Hiba($"A fajl {i + 1}. sora tul hosszu ({sorok[i].Length} karakter).");
-                    return;
-                }
-            }
-
-            // Csak sikeres beolvasas es teljes meretellenorzes utan toroljuk
-            // a korabbi rajzot, majd masoljuk be az uj mintat.
-            RajzTorlese();
-
-            for (int y = 0; y < sorok.Length; y++)
-            {
-                for (int x = 0; x < sorok[y].Length; x++)
-                {
-                    // A szokoz is karakter: szandekosan bemasoljuk, hogy
-                    // a minta eredeti vizualis elrendezese megmaradjon.
-                    CellabaIr(x, y, sorok[y][x], _aktualisSzin);
-                }
-            }
-
-            _uzenet = $"A minta betoltve: {Path.GetFileName(utvonal)}.";
-            _hibaUzenet = "";
-        }
-        catch (Exception ex) when (
-            ex is IOException ||
-            ex is UnauthorizedAccessException ||
-            ex is ArgumentException ||
-            ex is NotSupportedException ||
-            ex is System.Security.SecurityException)
-        {
-            // Hianyzo, nem olvashato vagy hibas utvonalu fajlnal a regi rajz
-            // erintetlen marad. A menu ujbol megnyithato es ujra probalhato.
-            Hiba($"A fajl nem toltheto be: {ex.Message}");
-        }
     }
 
     // ------------------------------------------------------------------------
@@ -755,9 +518,6 @@ sealed class Rajzolo
         KiirPanelSort(13, "Nyilak: mozgas");
         KiirPanelSort(14, "Szokoz: eszkoz");
         KiirPanelSort(15, "F1-F3: X");
-        KiirPanelSort(16, "F4-F6: Kereszt");
-        KiirPanelSort(17, "F7-F9: Negyzet");
-        KiirPanelSort(18, "F10-F12: Rombusz");
         KiirPanelSort(20, "M: menu");
     }
 
@@ -798,6 +558,95 @@ sealed class Rajzolo
     private static string LathatoKarakter(char karakter)
     {
         return karakter == ' ' ? "szokoz" : karakter.ToString();
+    }
+
+    public void Futtatas()
+    {
+        Megjelenites();
+
+        bool fut = true;
+        while (fut)
+        {
+            ConsoleKeyInfo billentyu = Console.ReadKey(true);
+
+            if (_menuNyitva)
+            {
+                fut = MenuBillentyuKezelese(billentyu);
+            }
+            else
+            {
+                fut = RajzBillentyuKezelese(billentyu);
+            }
+
+            if (!fut)
+                break;
+
+            Megjelenites();
+
+            // ----------------------------------------------------------------
+            // 2-es tanuló:
+            // ----------------------------------------------------------------
+            if (_menuNyitva)
+                continue;
+
+            int meret = 0;
+            if (billentyu.Key == ConsoleKey.F1)
+                meret = 3;
+            if (billentyu.Key == ConsoleKey.F2)
+                meret = 5;
+            if (billentyu.Key == ConsoleKey.F3)
+                meret = 7;
+
+            if (meret == 0)
+                continue;
+
+            int sugar = meret / 2;
+            if (_x - sugar < 0 || _x + sugar >= _rajzlapSzelesseg ||
+                _y - sugar < 0 || _y + sugar >= _rajzlapMagassag)
+            {
+                Hiba($"A {meret}x{meret}-es nyomda nem fer el ezen a helyen.");
+                Megjelenites();
+                continue;
+            }
+
+         
+            for (int elteres = -sugar; elteres <= sugar; elteres++)
+            {
+                int celY = _y + elteres;
+                int elsoX = _x + elteres;
+                int masodikX = _x - elteres;
+
+                _karakterek[celY, elsoX] = _aktualisKarakter;
+                _szinek[celY, elsoX] = _aktualisSzin;
+                Console.ForegroundColor = _aktualisSzin;
+                if (elteres == 0)
+                {
+                    Console.BackgroundColor = ConsoleColor.White;
+                    Console.ForegroundColor = ConsoleColor.Black;
+                }
+                Console.SetCursorPosition(RajzlapKezdoOszlop + elsoX, celY + 1);
+                Console.Write(_aktualisKarakter);
+
+            
+                if (elteres != 0)
+                {
+                    _karakterek[celY, masodikX] = _aktualisKarakter;
+                    _szinek[celY, masodikX] = _aktualisSzin;
+                    Console.SetCursorPosition(RajzlapKezdoOszlop + masodikX, celY + 1);
+                    Console.Write(_aktualisKarakter);
+                }
+
+                Console.ResetColor();
+            }
+
+            _hibaUzenet = "";
+            _uzenet = $"{meret}x{meret}-es X nyomda elhelyezve.";
+            Console.SetCursorPosition(0, Console.WindowHeight - AlsoSegedSorok + 1);
+            Console.ForegroundColor = ConsoleColor.Gray;
+            Console.Write(_uzenet.PadRight(Console.WindowWidth - 1));
+            Console.ResetColor();
+            Console.SetCursorPosition(RajzlapKezdoOszlop + _x, _y + 1);
+        }
     }
 }
 
