@@ -4,7 +4,7 @@
 
 | Név vagy GitHub-felhasználónév | Vállalt feladatok és szerep | Saját menüfunkció |
 | Nagy Nándor | --- | --- |
-|Jákób Levente |  Alakzatok rajzolása, Alakzatok ellenőrzése, Szövegfájl betöltése |  A Dusza Árpád Országos Programozói Emlékversenyre való tekintettel a saját menüfunkcióra nem jutott időm |
+|Jákób Levente |  Alakzatok rajzolása, Alakzatok ellenőrzése, Szövegfájl betöltése |   |
 
 ## Közös megállapodások
 
@@ -18,7 +18,8 @@
 | --- | --- | --- | --- |
 | 2026.11.18 | Nagy Nándor | A konzolos rajzolóprogram menjüje | Levente készítse el a hozza tartózó logikai kódot -Commit:  Alap dolgok + Nándor része készem amit órán elkészített |
 | 2026.11.22 | Jákób Levente | Az alap logikai müködés átgondolása/megértése, az ai segítségével a kiinduló lépések, és a szukséges végeredmény felmérése| A menufunkciók és a szöveges fajl beszurása - commit nem készült |
-| 2026.11.23 | Jákób Levente | A menü funkcók működése, ezeket ellenőrzése tesztelése, fajbeolvasás elkészítése tesztelése | Commit: F1-F3 funkciók muködése, a kód szétszedése tanulók szerint, kezdetleges Projectnapló elkészítése, AI használat jellemzése - JL |
+| 2026.11.23 | Jákób Levente | A menü funkcók működése, ezeket ellenőrzése tesztelése, fajbeolvasás elkészítése tesztelése, mozgás módosítása - Nándor adott egy kész mozgási feladatokat ellátó kódót, de én ezt nem nagyon értettem, ezért ai segítségével tanulmányoztam, és a saját tudásom szerinnt elkészítettem | Commit: F1-F3 funkciók muködése, a kód szétszedése tanulók szerint, kezdetleges Projectnapló elkészítése, AI használat jellemzése - JL , Kereszt, négyzetkeret és rombusz nyomda, nagyjábpl kész projectnapló - JL |
+
 
 
 ## Másik pár tesztje

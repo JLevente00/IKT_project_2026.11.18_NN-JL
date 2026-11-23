@@ -1,6 +1,6 @@
 ﻿// ============================================================================
 // KONZOLOS RAJZOLO
-// 1-es tanuló – Felület, kurzor, menü, szabadkézi rajzolás és cellatörlés.
+// 1-es tanuló – Felület, menü és cellatörlés.
 //
 // Fontos: a Console.SetCursorPosition parameterei (oszlop, sor) sorrendben
 // ertendoek. A sajat rajzlapon beluli koordinatak viszont (x, y), ahol
@@ -138,78 +138,6 @@ sealed class Rajzolo
 
         if (_rajzlapSzelesseg < 1 || _rajzlapMagassag < 1)
             throw new InvalidOperationException("Tul kicsi a konzolablak.");
-    }
-
-    // ------------------------------------------------------------------------
-    // Rajzolas kozbeni billentyuk kezelese
-    // ------------------------------------------------------------------------
-    private bool RajzBillentyuKezelese(ConsoleKeyInfo billentyu)
-    {
-        switch (billentyu.Key)
-        {
-            case ConsoleKey.UpArrow:
-                Mozgas(0, -1);
-                break;
-
-            case ConsoleKey.DownArrow:
-                Mozgas(0, 1);
-                break;
-
-            case ConsoleKey.LeftArrow:
-                Mozgas(-1, 0);
-                break;
-
-            case ConsoleKey.RightArrow:
-                Mozgas(1, 0);
-                break;
-
-            case ConsoleKey.Spacebar:
-                // Az eszkoz letetelekor az aktualis cellaba is rajzolunk.
-                _eszkozLeteve = !_eszkozLeteve;
-
-                if (_eszkozLeteve)
-                    CellabaIr(_x, _y, _aktualisKarakter, _aktualisSzin);
-
-                _uzenet = _eszkozLeteve
-                    ? "Az eszkoz LETEVE: a mozgas rajzol."
-                    : "Az eszkoz FELEMELVE: a mozgas nem rajzol.";
-                break;
-
-            case ConsoleKey.M:
-            case ConsoleKey.Escape:
-                _menuNyitva = true;
-                _menuValasztas = 0;
-                _uzenet = "Fel/Le: valasztas | Enter: megnyitas | Esc: vissza";
-                break;
-        }
-
-        return true;
-    }
-
-    // Egyetlen helyen kezeljuk a kurzormozgatast, igy a negy irany
-    // hatarellenorzese es a szabadkezes rajzolas is azonosan mukodik.
-    private void Mozgas(int dx, int dy)
-    {
-        int ujX = _x + dx;
-        int ujY = _y + dy;
-
-        // A celcellat meg a kurzor vagy a rajz megvaltoztatasa elott
-        // ellenorizzuk. Hataron kivul semmi nem valtozhat.
-        if (!ErvenyesKoordinata(ujX, ujY))
-        {
-            Hiba("A rajzlap szelen tul nem lehet lepni.");
-            return;
-        }
-
-        _x = ujX;
-        _y = ujY;
-
-        // Letett eszkoznel minden ervenyes lepes a celcellaba rajzol.
-        if (_eszkozLeteve)
-            CellabaIr(_x, _y, _aktualisKarakter, _aktualisSzin);
-
-        _uzenet = "Kurzor mozgatva.";
-        _hibaUzenet = "";
     }
 
     // ------------------------------------------------------------------------
@@ -571,14 +499,58 @@ sealed class Rajzolo
         while (fut)
         {
             ConsoleKeyInfo billentyu = Console.ReadKey(true);
+            ConsoleKey gomb = billentyu.Key;
 
             if (_menuNyitva)
             {
                 fut = MenuBillentyuKezelese(billentyu);
             }
+            else if (gomb == ConsoleKey.M || gomb == ConsoleKey.Escape)
+            {
+                _menuNyitva = true;
+                _menuValasztas = 0;
+                _uzenet = "Fel/Le: valasztas | Enter: megnyitas | Esc: vissza";
+            }
             else
             {
-                fut = RajzBillentyuKezelese(billentyu);
+                // 2-es tanuló – Kurzor és szabadkézi rajzolás.
+                int ujX = _x;
+                int ujY = _y;
+                if (gomb == ConsoleKey.UpArrow)
+                    ujY--;
+                else if (gomb == ConsoleKey.DownArrow)
+                    ujY++;
+                else if (gomb == ConsoleKey.LeftArrow)
+                    ujX--;
+                else if (gomb == ConsoleKey.RightArrow)
+                    ujX++;
+
+                if (ujX != _x || ujY != _y || gomb == ConsoleKey.Spacebar)
+                {
+                    if (ujX < 0 || ujX >= _rajzlapSzelesseg || ujY < 0 || ujY >= _rajzlapMagassag)
+                    {
+                        Hiba("A rajzlap szelen tul nem lehet lepni.");
+                    }
+                    else
+                    {
+                        _x = ujX;
+                        _y = ujY;
+                        _hibaUzenet = "";
+                        _uzenet = "Kurzor mozgatva.";
+
+                        if (gomb == ConsoleKey.Spacebar)
+                        {
+                            _eszkozLeteve = !_eszkozLeteve;
+                            _uzenet = _eszkozLeteve ? "Az eszkoz LETEVE." : "Az eszkoz FELEMELVE.";
+                        }
+
+                        if (_eszkozLeteve)
+                        {
+                            _karakterek[_y, _x] = _aktualisKarakter;
+                            _szinek[_y, _x] = _aktualisSzin;
+                        }
+                    }
+                }
             }
 
             if (!fut)
@@ -592,7 +564,6 @@ sealed class Rajzolo
             if (_menuNyitva)
                 continue;
 
-            ConsoleKey gomb = billentyu.Key;
             int meret = 0;
             if (gomb == ConsoleKey.F1 || gomb == ConsoleKey.F4 ||
                 gomb == ConsoleKey.F7 || gomb == ConsoleKey.F10)
@@ -628,7 +599,6 @@ sealed class Rajzolo
             {
                 for (int dx = -sugar; dx <= sugar; dx++)
                 {
-                    // Hány cellára van a pont a kurzortól vízszintesen és függőlegesen?
                     int tavX = Math.Abs(dx);
                     int tavY = Math.Abs(dy);
                     bool jelolt = false;
