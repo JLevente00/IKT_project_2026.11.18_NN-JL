@@ -7,6 +7,7 @@
 // ============================================================================
 
 using System;
+using System.IO;
 using System.Text;
 
 Console.OutputEncoding = Encoding.UTF8;
@@ -59,42 +60,43 @@ sealed class Rajzolo
     private const int AlsoSegedSorok = 3;
 
     // A rajzlap minden cellájához eltároljuk a karaktert és a színt.
-    private char[,] _karakterek;
-    private ConsoleColor[,] _szinek;
+    private char[,] karakterek;
+    private ConsoleColor[,] szinek;
 
-    private int _rajzlapSzelesseg;
-    private int _rajzlapMagassag;
+    private int rajzlapSzelesseg;
+    private int rajzlapMagassag;
 
     // A kurzor koordinátái a rajzlapon belül nullától indulnak.
-    private int _x;
-    private int _y;
+    private int kurzorOszlop;
+    private int kurzorSor;
 
-    private char _aktualisKarakter = '#';
-    private ConsoleColor _aktualisSzin = ConsoleColor.Cyan;
+    private char aktualisKarakter = '#';
+    private ConsoleColor aktualisSzin = ConsoleColor.Cyan;
 
     // Ha az érték true, az eszköz le van téve, és mozgás közben rajzol.
     // Induláskor az eszköz fel van emelve.
-    private bool _eszkozLeteve = false;
+    private bool eszkozLeteve = false;
 
-    private bool _menuNyitva = false;
-    private int _menuValasztas = 0;
-    private string _hibaUzenet = "";
-    private string _uzenet = "M: Menü | Nyilak: Mozgás | Szóköz: Eszköz | F1–F12: Nyomdák";
+    private bool menuNyitva = false;
+    private int menuValasztas = 0;
+    private string hibaUzenet = "";
+    private string uzenet = "M: Menü | Nyilak: Mozgás | Szóköz: Eszköz | F1–F12: Nyomdák";
 
-    private readonly string[] _menuPontok =
+    private readonly string[] menuPontok =
     {
         "Karakter választása",
         "Szín választása",
         "Cella törlése",
+        "Minta betöltése",
         "Kilépés"
     };
 
-    private readonly char[] _valaszthatoKarakterek =
+    private readonly char[] valaszthatoKarakterek =
     {
         '#', '*', '+', 'X', '@', '%', 'O', '.', ' '
     };
 
-    private readonly ConsoleColor[] _valaszthatoSzinek =
+    private readonly ConsoleColor[] valaszthatoSzinek =
     {
         ConsoleColor.White,
         ConsoleColor.Gray,
@@ -114,7 +116,7 @@ sealed class Rajzolo
     };
 
     // A nevek sorrendje megegyezik a választható színek sorrendjével.
-    private readonly string[] _szinNevek =
+    private readonly string[] szinNevek =
     {
         "Fehér", "Szürke", "Sötétszürke", "Piros", "Sötétpiros",
         "Zöld", "Sötétzöld", "Kék", "Sötétkék", "Cián",
@@ -126,21 +128,21 @@ sealed class Rajzolo
         // A rajzlap szélessége a konzolablak méretétől függ.
         MeretekFrissitese();
 
-        _karakterek = new char[_rajzlapMagassag, _rajzlapSzelesseg];
-        _szinek = new ConsoleColor[_rajzlapMagassag, _rajzlapSzelesseg];
+        karakterek = new char[rajzlapMagassag, rajzlapSzelesseg];
+        szinek = new ConsoleColor[rajzlapMagassag, rajzlapSzelesseg];
 
         RajzTorlese();
-        _x = _rajzlapSzelesseg / 2;
-        _y = _rajzlapMagassag / 2;
+        kurzorOszlop = rajzlapSzelesseg / 2;
+        kurzorSor = rajzlapMagassag / 2;
     }
 
     // A rajzlap a fejléc és az alsó információs sáv közötti területet használja.
     private void MeretekFrissitese()
     {
-        _rajzlapSzelesseg = Console.WindowWidth - RajzlapKezdoOszlop - 1;
-        _rajzlapMagassag = Console.WindowHeight - 5;
+        rajzlapSzelesseg = Console.WindowWidth - RajzlapKezdoOszlop - 1;
+        rajzlapMagassag = Console.WindowHeight - 5;
 
-        if (_rajzlapSzelesseg < 1 || _rajzlapMagassag < 1)
+        if (rajzlapSzelesseg < 1 || rajzlapMagassag < 1)
             throw new InvalidOperationException("Túl kicsi a konzolablak.");
     }
 
@@ -150,9 +152,9 @@ sealed class Rajzolo
     private void AktualisCellaTorlese()
     {
         // A kurzor alatti cellát töröljük.
-        CellabaIr(_x, _y, ' ', ConsoleColor.Gray);
-        _uzenet = "Az aktuális cella törölve.";
-        _hibaUzenet = "";
+        CellabaIr(kurzorOszlop, kurzorSor, ' ', ConsoleColor.Gray);
+        uzenet = "Az aktuális cella törölve.";
+        hibaUzenet = "";
     }
 
     // ------------------------------------------------------------------------
@@ -160,8 +162,8 @@ sealed class Rajzolo
     // ------------------------------------------------------------------------
     private bool ErvenyesKoordinata(int x, int y)
     {
-        return x >= 0 && x < _rajzlapSzelesseg &&
-               y >= 0 && y < _rajzlapMagassag;
+        return x >= 0 && x < rajzlapSzelesseg &&
+               y >= 0 && y < rajzlapMagassag;
     }
 
     private void CellabaIr(int x, int y, char karakter, ConsoleColor szin)
@@ -169,26 +171,26 @@ sealed class Rajzolo
         if (!ErvenyesKoordinata(x, y))
             return;
 
-        _karakterek[y, x] = karakter;
-        _szinek[y, x] = szin;
+        karakterek[y, x] = karakter;
+        szinek[y, x] = szin;
     }
 
     private void RajzTorlese()
     {
-        for (int y = 0; y < _rajzlapMagassag; y++)
+        for (int y = 0; y < rajzlapMagassag; y++)
         {
-            for (int x = 0; x < _rajzlapSzelesseg; x++)
+            for (int x = 0; x < rajzlapSzelesseg; x++)
             {
-                _karakterek[y, x] = ' ';
-                _szinek[y, x] = ConsoleColor.Gray;
+                karakterek[y, x] = ' ';
+                szinek[y, x] = ConsoleColor.Gray;
             }
         }
     }
 
     private void Hiba(string szoveg)
     {
-        _hibaUzenet = szoveg;
-        _uzenet = szoveg;
+        hibaUzenet = szoveg;
+        uzenet = szoveg;
 
         // Windowson hangjelzést, más rendszeren konzolcsengőt használunk.
         try
@@ -213,88 +215,105 @@ sealed class Rajzolo
         int ujSzelesseg = Console.WindowWidth - RajzlapKezdoOszlop - 1;
         int ujMagassag = Console.WindowHeight - 5;
 
-        if (ujSzelesseg != _rajzlapSzelesseg ||
-            ujMagassag != _rajzlapMagassag)
+        if (ujSzelesseg != rajzlapSzelesseg ||
+            ujMagassag != rajzlapMagassag)
         {
             // Átméretezéskor megőrizzük a korábbi rajz elférő részét.
-            char[,] regiKarakterek = _karakterek;
-            ConsoleColor[,] regiSzinek = _szinek;
-            int regiSzelesseg = _rajzlapSzelesseg;
-            int regiMagassag = _rajzlapMagassag;
+            char[,] regiKarakterek = karakterek;
+            ConsoleColor[,] regiSzinek = szinek;
+            int regiSzelesseg = rajzlapSzelesseg;
+            int regiMagassag = rajzlapMagassag;
 
-            _rajzlapSzelesseg = Math.Max(1, ujSzelesseg);
-            _rajzlapMagassag = Math.Max(1, ujMagassag);
-            _karakterek = new char[_rajzlapMagassag, _rajzlapSzelesseg];
-            _szinek = new ConsoleColor[_rajzlapMagassag, _rajzlapSzelesseg];
+            rajzlapSzelesseg = Math.Max(1, ujSzelesseg);
+            rajzlapMagassag = Math.Max(1, ujMagassag);
+            karakterek = new char[rajzlapMagassag, rajzlapSzelesseg];
+            szinek = new ConsoleColor[rajzlapMagassag, rajzlapSzelesseg];
             RajzTorlese();
 
-            for (int y = 0; y < Math.Min(regiMagassag, _rajzlapMagassag); y++)
+            for (int y = 0; y < Math.Min(regiMagassag, rajzlapMagassag); y++)
             {
-                for (int x = 0; x < Math.Min(regiSzelesseg, _rajzlapSzelesseg); x++)
+                for (int x = 0; x < Math.Min(regiSzelesseg, rajzlapSzelesseg); x++)
                 {
-                    _karakterek[y, x] = regiKarakterek[y, x];
-                    _szinek[y, x] = regiSzinek[y, x];
+                    karakterek[y, x] = regiKarakterek[y, x];
+                    szinek[y, x] = regiSzinek[y, x];
                 }
             }
 
-            _x = Math.Clamp(_x, 0, _rajzlapSzelesseg - 1);
-            _y = Math.Clamp(_y, 0, _rajzlapMagassag - 1);
+            kurzorOszlop = Math.Clamp(kurzorOszlop, 0, rajzlapSzelesseg - 1);
+            kurzorSor = Math.Clamp(kurzorSor, 0, rajzlapMagassag - 1);
         }
 
         Console.ResetColor();
         Console.Clear();
 
+        // 2-es tanuló – A keret a rajzolható cellákon kívül van.
+        int balKeret = RajzlapKezdoOszlop - 1;
+        int jobbKeret = RajzlapKezdoOszlop + rajzlapSzelesseg;
+        string vizszintesVonal = new string('─', rajzlapSzelesseg);
+        string felsoVonal = vizszintesVonal;
+        const string rajzlapCim = "─ Rajzlap ";
+        if (rajzlapSzelesseg > rajzlapCim.Length)
+            felsoVonal = rajzlapCim + vizszintesVonal.Substring(rajzlapCim.Length);
+
         // Fejléc.
         Console.SetCursorPosition(0, 0);
         Console.ForegroundColor = ConsoleColor.Cyan;
-        Console.Write("Konzolos rajzoló".PadRight(PanelSzelesseg));
+        Console.Write("Konzolos rajzoló".PadRight(balKeret));
+        Console.ForegroundColor = ConsoleColor.Gray;
+        Console.Write($"┌{felsoVonal}┐");
         Console.ResetColor();
-        Console.WriteLine("Rajzlap");
 
         // Bal oldali panel.
-        if (_menuNyitva)
+        if (menuNyitva)
             MenuPanelRajzolasa();
         AllapotPanelRajzolasa();
 
         // A rajzlap minden celláját a tárolt karakterrel és színnel rajzoljuk ki.
-        for (int y = 0; y < _rajzlapMagassag; y++)
+        for (int y = 0; y < rajzlapMagassag; y++)
         {
-            for (int x = 0; x < _rajzlapSzelesseg; x++)
+            Console.ForegroundColor = ConsoleColor.Gray;
+            Console.SetCursorPosition(balKeret, y + 1);
+            Console.Write('│');
+            Console.SetCursorPosition(jobbKeret, y + 1);
+            Console.Write('│');
+            Console.ResetColor();
+
+            for (int x = 0; x < rajzlapSzelesseg; x++)
             {
                 Console.SetCursorPosition(RajzlapKezdoOszlop + x, y + 1);
 
                 // A kurzor helyét fordított színekkel mutatjuk.
-                if (x == _x && y == _y)
+                if (x == kurzorOszlop && y == kurzorSor)
                 {
                     Console.BackgroundColor = ConsoleColor.White;
                     Console.ForegroundColor = ConsoleColor.Black;
-                    char kurzorKarakter = _karakterek[y, x] == ' '
+                    char kurzorKarakter = karakterek[y, x] == ' '
                         ? ' '
-                        : _karakterek[y, x];
+                        : karakterek[y, x];
                     Console.Write(kurzorKarakter);
                     Console.ResetColor();
                 }
                 else
                 {
-                    Console.ForegroundColor = _szinek[y, x];
-                    Console.Write(_karakterek[y, x]);
+                    Console.ForegroundColor = szinek[y, x];
+                    Console.Write(karakterek[y, x]);
                     Console.ResetColor();
                 }
             }
         }
 
-        // Alsó információs sorok.
-        int alsoSor = Console.WindowHeight - 3;
-        Console.SetCursorPosition(0, alsoSor);
-        Console.ForegroundColor = ConsoleColor.DarkGray;
-        Console.Write(new string('─', Math.Max(1, Console.WindowWidth - 1)));
+        Console.SetCursorPosition(balKeret, rajzlapMagassag + 1);
+        Console.ForegroundColor = ConsoleColor.Gray;
+        Console.Write($"└{vizszintesVonal}┘");
         Console.ResetColor();
 
+        // Alsó információs sorok.
+        int alsoSor = Console.WindowHeight - AlsoSegedSorok;
         Console.SetCursorPosition(0, alsoSor + 1);
-        string statusz = _hibaUzenet.Length > 0
-            ? "Hiba: " + _hibaUzenet
-            : _uzenet;
-        Console.ForegroundColor = _hibaUzenet.Length > 0
+        string statusz = hibaUzenet.Length > 0
+            ? "Hiba: " + hibaUzenet
+            : uzenet;
+        Console.ForegroundColor = hibaUzenet.Length > 0
             ? ConsoleColor.Red
             : ConsoleColor.Gray;
         Console.Write(statusz.PadRight(Math.Max(1, Console.WindowWidth - 1))
@@ -306,21 +325,21 @@ sealed class Rajzolo
 
         // A konzol kurzorát a kiemelt rajzlapi cellára állítjuk.
         Console.SetCursorPosition(
-            Math.Min(Console.WindowWidth - 1, RajzlapKezdoOszlop + _x),
-            Math.Min(Console.WindowHeight - 1, _y + 1));
+            Math.Min(Console.WindowWidth - 1, RajzlapKezdoOszlop + kurzorOszlop),
+            Math.Min(Console.WindowHeight - 1, kurzorSor + 1));
     }
 
     private void AllapotPanelRajzolasa()
     {
-        int sor = _menuNyitva ? 9 : 4;
-        int sorkoz = _menuNyitva ? 1 : 2;
-        int szinIndex = Array.IndexOf(_valaszthatoSzinek, _aktualisSzin);
-        KiirPanelSort(sor, $"Pozíció: ({_x}, {_y})");
-        KiirPanelSort(sor + sorkoz, $"Karakter: [{LathatoKarakter(_aktualisKarakter)}]");
-        KiirPanelSort(sor + 2 * sorkoz, $"Szín: {_szinNevek[szinIndex]}");
-        KiirPanelSort(sor + 3 * sorkoz, _eszkozLeteve ? "Eszköz: Letéve" : "Eszköz: Felemelve");
+        int sor = menuNyitva ? 9 : 4;
+        int sorkoz = menuNyitva ? 1 : 2;
+        int szinIndex = Array.IndexOf(valaszthatoSzinek, aktualisSzin);
+        KiirPanelSort(sor, $"Pozíció: ({kurzorOszlop}, {kurzorSor})");
+        KiirPanelSort(sor + sorkoz, $"Karakter: [{LathatoKarakter(aktualisKarakter)}]");
+        KiirPanelSort(sor + 2 * sorkoz, $"Szín: {szinNevek[szinIndex]}");
+        KiirPanelSort(sor + 3 * sorkoz, eszkozLeteve ? "Eszköz: Letéve" : "Eszköz: Felemelve");
 
-        if (_menuNyitva)
+        if (menuNyitva)
             return;
 
         KiirPanelSort(2, "M: Menü megnyitása");
@@ -335,14 +354,14 @@ sealed class Rajzolo
     private void MenuPanelRajzolasa()
     {
         KiirPanelSort(2, "Menü");
-        for (int i = 0; i < _menuPontok.Length; i++)
+        for (int i = 0; i < menuPontok.Length; i++)
         {
             Console.SetCursorPosition(0, 4 + i);
-            string jel = i == _menuValasztas ? "> " : "  ";
-            Console.ForegroundColor = i == _menuValasztas
+            string jel = i == menuValasztas ? "> " : "  ";
+            Console.ForegroundColor = i == menuValasztas
                 ? ConsoleColor.Yellow
                 : ConsoleColor.Gray;
-            Console.Write((jel + _menuPontok[i]).PadRight(PanelSzelesseg - 1));
+            Console.Write((jel + menuPontok[i]).PadRight(PanelSzelesseg - 1));
             Console.ResetColor();
         }
 
@@ -369,46 +388,137 @@ sealed class Rajzolo
         return karakter == ' ' ? "szóköz" : karakter.ToString();
     }
 
-    // 2-es tanuló – Menükezelés és választás.
+    // ----------------------------------------------------------------
+    // 2-es tanuló:
+    // ----------------------------------------------------------------
+
     private bool MenuBillentyuKezelese(ConsoleKeyInfo billentyu)
     {
         ConsoleKey gomb = billentyu.Key;
-        _hibaUzenet = "";
+        hibaUzenet = "";
 
         if (gomb == ConsoleKey.UpArrow || gomb == ConsoleKey.DownArrow)
         {
             int irany = gomb == ConsoleKey.UpArrow ? -1 : 1;
-            _menuValasztas = (_menuValasztas + irany + _menuPontok.Length) % _menuPontok.Length;
-            _uzenet = $"Menüpont: {_menuPontok[_menuValasztas]}.";
+            menuValasztas = (menuValasztas + irany + menuPontok.Length) % menuPontok.Length;
+            uzenet = $"Menüpont: {menuPontok[menuValasztas]}.";
         }
         else if (gomb == ConsoleKey.M || gomb == ConsoleKey.Escape)
         {
-            _menuNyitva = false;
-            _uzenet = "Menü bezárva. A rajzolás folytatható.";
+            menuNyitva = false;
+            uzenet = "Menü bezárva. A rajzolás folytatható.";
         }
         else if (gomb != ConsoleKey.Enter)
         {
             Hiba("A menüben a Fel/Le, az Enter, az M és az Esc használható.");
         }
-        else if (_menuValasztas == 3)
+        else if (menuValasztas == 4)
         {
             return false;
         }
-        else if (_menuValasztas == 2)
+        else if (menuValasztas == 2)
         {
             AktualisCellaTorlese();
         }
+        else if (menuValasztas == 3)
+        {
+            Console.Clear();
+            Console.CursorVisible = true;
+            Console.Write("A .txt fájl útvonala (üres sorral mégse): ");
+            string? utvonal = Console.ReadLine();
+            Console.CursorVisible = false;
+
+            if (string.IsNullOrWhiteSpace(utvonal))
+            {
+                uzenet = "A betöltést megszakítottad.";
+                return true;
+            }
+
+            utvonal = utvonal.Trim().Trim('"');
+            if (!utvonal.EndsWith(".txt", StringComparison.OrdinalIgnoreCase))
+            {
+                Hiba("Csak .txt fájl tölthető be.");
+                return true;
+            }
+
+            string minta;
+            try
+            {
+                using FileStream fajl = File.OpenRead(utvonal);
+                long legnagyobbFajlmeret = (rajzlapSzelesseg + 2L) * rajzlapMagassag * 4 + 4;
+                if (fajl.Length > legnagyobbFajlmeret)
+                {
+                    Hiba("A fájl túl nagy a rajzlaphoz.");
+                    return true;
+                }
+
+                using StreamReader olvaso = new StreamReader(fajl);
+                minta = olvaso.ReadToEnd().Replace("\r\n", "\n").Replace('\r', '\n');
+            }
+            catch (Exception kivetel) when (kivetel is IOException || kivetel is UnauthorizedAccessException ||
+                                            kivetel is ArgumentException || kivetel is NotSupportedException)
+            {
+                Hiba("A fájl nem olvasható. Ellenőrizd az útvonalat.");
+                return true;
+            }
+
+            int sor = 0;
+            int oszlop = 0;
+            foreach (char jel in minta)
+            {
+                if (sor >= rajzlapMagassag || (jel != '\n' && oszlop >= rajzlapSzelesseg))
+                {
+                    Hiba("A minta nem fér el a rajzlapon.");
+                    return true;
+                }
+                if (jel == '\n')
+                {
+                    sor = sor + 1;
+                    oszlop = 0;
+                }
+                else if (char.IsControl(jel))
+                {
+                    Hiba("A mintában olyan jel van, amely nem jeleníthető meg.");
+                    return true;
+                }
+                else
+                {
+                    oszlop = oszlop + 1;
+                }
+            }
+
+
+            RajzTorlese();
+            sor = 0;
+            oszlop = 0;
+            foreach (char jel in minta)
+            {
+                if (jel == '\n')
+                {
+                    sor = sor + 1;
+                    oszlop = 0;
+                }
+                else
+                {
+                    CellabaIr(oszlop, sor, jel, aktualisSzin);
+                    oszlop = oszlop + 1;
+                }
+            }
+
+            menuNyitva = false;
+            uzenet = "A minta betöltve. Folytathatod a rajzolást.";
+        }
         else
         {
-            bool karaktertValaszt = _menuValasztas == 0;
+            bool karaktertValaszt = menuValasztas == 0;
             int index = karaktertValaszt
-                ? Array.IndexOf(_valaszthatoKarakterek, _aktualisKarakter)
-                : Array.IndexOf(_valaszthatoSzinek, _aktualisSzin);
-            int darab = karaktertValaszt ? _valaszthatoKarakterek.Length : _valaszthatoSzinek.Length;
+                ? Array.IndexOf(valaszthatoKarakterek, aktualisKarakter)
+                : Array.IndexOf(valaszthatoSzinek, aktualisSzin);
+            int darab = karaktertValaszt ? valaszthatoKarakterek.Length : valaszthatoSzinek.Length;
 
             while (true)
             {
-                _uzenet = "Válassz a nyilakkal, majd nyomj Entert.";
+                uzenet = "Válassz a nyilakkal, majd nyomj Entert.";
                 Megjelenites();
                 KiirPanelSort(14, "Fel/Le: váltás");
                 KiirPanelSort(15, "Enter: mentés");
@@ -416,35 +526,35 @@ sealed class Rajzolo
 
                 if (karaktertValaszt)
                 {
-                    KiirPanelSort(18, $"Jelölt: [{LathatoKarakter(_valaszthatoKarakterek[index])}]");
+                    KiirPanelSort(18, $"Jelölt: [{LathatoKarakter(valaszthatoKarakterek[index])}]");
                 }
                 else if (Console.WindowHeight > 18)
                 {
                     KiirPanelSort(18, "Jelölt:");
                     Console.SetCursorPosition(8, 18);
-                    Console.ForegroundColor = _valaszthatoSzinek[index];
-                    Console.Write(_szinNevek[index]);
+                    Console.ForegroundColor = valaszthatoSzinek[index];
+                    Console.Write(szinNevek[index]);
                     Console.ResetColor();
                 }
 
                 gomb = Console.ReadKey(true).Key;
-                _hibaUzenet = "";
+                hibaUzenet = "";
                 if (gomb == ConsoleKey.M || gomb == ConsoleKey.Escape)
                 {
-                    _uzenet = "A választást megszakítottad.";
+                    uzenet = "A választást megszakítottad.";
                     break;
                 }
                 if (gomb == ConsoleKey.Enter)
                 {
                     if (karaktertValaszt)
                     {
-                        _aktualisKarakter = _valaszthatoKarakterek[index];
-                        _uzenet = $"A rajzkarakter: [{LathatoKarakter(_aktualisKarakter)}].";
+                        aktualisKarakter = valaszthatoKarakterek[index];
+                        uzenet = $"A rajzkarakter: [{LathatoKarakter(aktualisKarakter)}].";
                     }
                     else
                     {
-                        _aktualisSzin = _valaszthatoSzinek[index];
-                        _uzenet = $"A rajzszín: {_szinNevek[index]}.";
+                        aktualisSzin = valaszthatoSzinek[index];
+                        uzenet = $"A rajzszín: {szinNevek[index]}.";
                     }
                     break;
                 }
@@ -470,57 +580,65 @@ sealed class Rajzolo
             ConsoleKeyInfo billentyu = Console.ReadKey(true);
             ConsoleKey gomb = billentyu.Key;
 
-            if (_menuNyitva)
+            if (menuNyitva)
             {
                 fut = MenuBillentyuKezelese(billentyu);
             }
             else if (gomb == ConsoleKey.M || gomb == ConsoleKey.Escape)
             {
-                _menuNyitva = true;
-                _menuValasztas = 0;
-                _hibaUzenet = "";
-                _uzenet = "Menü megnyitva.";
+                menuNyitva = true;
+                menuValasztas = 0;
+                hibaUzenet = "";
+                uzenet = "Menü megnyitva.";
             }
             else
             {
-                // ----------------------------------------------------------------
-                // 2-es tanuló:
-                // ----------------------------------------------------------------
-
-                int ujX = _x;
-                int ujY = _y;
+                int ujKurzorOszlop = kurzorOszlop;
+                int ujKurzorSor = kurzorSor;
                 if (gomb == ConsoleKey.UpArrow)
-                    ujY--;
+                    ujKurzorSor = kurzorSor - 1;
                 else if (gomb == ConsoleKey.DownArrow)
-                    ujY++;
+                    ujKurzorSor = kurzorSor + 1;
                 else if (gomb == ConsoleKey.LeftArrow)
-                    ujX--;
+                    ujKurzorOszlop = kurzorOszlop - 1;
                 else if (gomb == ConsoleKey.RightArrow)
-                    ujX++;
+                    ujKurzorOszlop = kurzorOszlop + 1;
 
-                if (ujX != _x || ujY != _y || gomb == ConsoleKey.Spacebar)
+                bool mozognaAKurzor = ujKurzorOszlop != kurzorOszlop || ujKurzorSor != kurzorSor;
+                bool eszkozValtas = gomb == ConsoleKey.Spacebar;
+                if (mozognaAKurzor || eszkozValtas)
                 {
-                    if (ujX < 0 || ujX >= _rajzlapSzelesseg || ujY < 0 || ujY >= _rajzlapMagassag)
+                    bool oszlopErvenyes = ujKurzorOszlop >= 0 && ujKurzorOszlop < rajzlapSzelesseg;
+                    bool sorErvenyes = ujKurzorSor >= 0 && ujKurzorSor < rajzlapMagassag;
+                    if (!oszlopErvenyes || !sorErvenyes)
                     {
                         Hiba("A rajzlap szélén túl nem lehet lépni.");
                     }
                     else
                     {
-                        _x = ujX;
-                        _y = ujY;
-                        _hibaUzenet = "";
-                        _uzenet = "Kurzor mozgatva.";
+                        kurzorOszlop = ujKurzorOszlop;
+                        kurzorSor = ujKurzorSor;
+                        hibaUzenet = "";
+                        uzenet = "Kurzor mozgatva.";
 
-                        if (gomb == ConsoleKey.Spacebar)
+                        if (eszkozValtas)
                         {
-                            _eszkozLeteve = !_eszkozLeteve;
-                            _uzenet = _eszkozLeteve ? "Az eszköz letéve." : "Az eszköz felemelve.";
+                            if (eszkozLeteve)
+                            {
+                                eszkozLeteve = false;
+                                uzenet = "Az eszköz felemelve.";
+                            }
+                            else
+                            {
+                                eszkozLeteve = true;
+                                uzenet = "Az eszköz letéve.";
+                            }
                         }
 
-                        if (_eszkozLeteve)
+                        if (eszkozLeteve)
                         {
-                            _karakterek[_y, _x] = _aktualisKarakter;
-                            _szinek[_y, _x] = _aktualisSzin;
+                            karakterek[kurzorSor, kurzorOszlop] = aktualisKarakter;
+                            szinek[kurzorSor, kurzorOszlop] = aktualisSzin;
                         }
                     }
                 }
@@ -532,7 +650,7 @@ sealed class Rajzolo
             Megjelenites();
 
 
-            if (_menuNyitva)
+            if (menuNyitva)
                 continue;
 
             int meret = 0;
@@ -558,59 +676,59 @@ sealed class Rajzolo
                 alakzat = "rombuszkeret";
 
             int sugar = meret / 2;
-            if (_x - sugar < 0 || _x + sugar >= _rajzlapSzelesseg ||
-                _y - sugar < 0 || _y + sugar >= _rajzlapMagassag)
+            if (kurzorOszlop - sugar < 0 || kurzorOszlop + sugar >= rajzlapSzelesseg ||
+                kurzorSor - sugar < 0 || kurzorSor + sugar >= rajzlapMagassag)
             {
                 Hiba($"A {meret}×{meret} méretű nyomda nem fér el ezen a helyen.");
                 Megjelenites();
                 continue;
             }
 
-            for (int dy = -sugar; dy <= sugar; dy++)
+            for (int sorEltolas = -sugar; sorEltolas <= sugar; sorEltolas = sorEltolas + 1)
             {
-                for (int dx = -sugar; dx <= sugar; dx++)
+                for (int oszlopEltolas = -sugar; oszlopEltolas <= sugar; oszlopEltolas = oszlopEltolas + 1)
                 {
-                    int tavX = Math.Abs(dx);
-                    int tavY = Math.Abs(dy);
+                    int vizszintesTavolsag = Math.Abs(oszlopEltolas);
+                    int fuggolegesTavolsag = Math.Abs(sorEltolas);
                     bool jelolt = false;
 
                     if (alakzat == "X")
-                        jelolt = tavX == tavY;
+                        jelolt = vizszintesTavolsag == fuggolegesTavolsag;
                     else if (alakzat == "kereszt")
-                        jelolt = dx == 0 || dy == 0;
+                        jelolt = oszlopEltolas == 0 || sorEltolas == 0;
                     else if (alakzat == "négyzetkeret")
-                        jelolt = tavX == sugar || tavY == sugar;
+                        jelolt = vizszintesTavolsag == sugar || fuggolegesTavolsag == sugar;
                     else if (alakzat == "rombuszkeret")
-                        jelolt = tavX + tavY == sugar;
+                        jelolt = vizszintesTavolsag + fuggolegesTavolsag == sugar;
 
                     if (!jelolt)
                         continue;
 
-                    int celX = _x + dx;
-                    int celY = _y + dy;
-                    _karakterek[celY, celX] = _aktualisKarakter;
-                    _szinek[celY, celX] = _aktualisSzin;
+                    int celOszlop = kurzorOszlop + oszlopEltolas;
+                    int celSor = kurzorSor + sorEltolas;
+                    karakterek[celSor, celOszlop] = aktualisKarakter;
+                    szinek[celSor, celOszlop] = aktualisSzin;
 
-                    Console.ForegroundColor = _aktualisSzin;
-                    if (dx == 0 && dy == 0)
+                    Console.ForegroundColor = aktualisSzin;
+                    if (oszlopEltolas == 0 && sorEltolas == 0)
                     {
                         Console.BackgroundColor = ConsoleColor.White;
                         Console.ForegroundColor = ConsoleColor.Black;
                     }
-                    Console.SetCursorPosition(RajzlapKezdoOszlop + celX, celY + 1);
-                    Console.Write(_aktualisKarakter);
+                    Console.SetCursorPosition(RajzlapKezdoOszlop + celOszlop, celSor + 1);
+                    Console.Write(aktualisKarakter);
                     Console.ResetColor();
                 }
             }
 
-            _hibaUzenet = "";
-            _uzenet = $"Elhelyezve: {meret}×{meret} méretű {alakzat}.";
+            hibaUzenet = "";
+            uzenet = $"Elhelyezve: {meret}×{meret} méretű {alakzat}.";
             Console.SetCursorPosition(0, Console.WindowHeight - AlsoSegedSorok + 1);
             Console.ForegroundColor = ConsoleColor.Gray;
             int statuszSzelesseg = Console.WindowWidth - 1;
-            Console.Write(_uzenet.PadRight(statuszSzelesseg).Substring(0, statuszSzelesseg));
+            Console.Write(uzenet.PadRight(statuszSzelesseg).Substring(0, statuszSzelesseg));
             Console.ResetColor();
-            Console.SetCursorPosition(RajzlapKezdoOszlop + _x, _y + 1);
+            Console.SetCursorPosition(RajzlapKezdoOszlop + kurzorOszlop, kurzorSor + 1);
         }
     }
 }
