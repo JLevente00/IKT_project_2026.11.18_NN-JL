@@ -3,8 +3,9 @@
 ## Csapat és munkamegosztás
 
 | Név vagy GitHub-felhasználónév | Vállalt feladatok és szerep | Saját menüfunkció |
-| Nagy Nándor | --- | --- |
+| --- | --- | --- |
 |Jákób Levente |  Alakzatok rajzolása, Alakzatok ellenőrzése, Szövegfájl betöltése |  A Dusza Árpád Országos Programozói Emlékversenyre való tekintettel a saját menüfunkcióra nem jutott időm |
+|Nagy Nándor| || ||
 
 ## Közös megállapodások
 
