@@ -36,3 +36,7 @@ Aki használt AI-t, írja le a nevét, miben kért segítséget, és mit tanult 
 - Miben kértem segítséget: A másik fél munkájának ellenőrzésében és megértésében, a feladatok felosztásában, a változónevek megválasztásában és a kód olvashatóságának ellenőrzésében. Mindkét fájlban kértem segítséget a helyesírási hibák és az elgépelések javításához. A szövegek átformálása/átfogalmazása/helysiírásellenőrzés mind a projectnaplo.md-ben mint a programban, a fajbeolvasás megértéséhez szükséges tudás elsajátítása.
 - Mit tanultam meg: A munkát két fő részre lehet osztani. Az egyik ember a felületért és a megjelenésért, a másik a kód logikájáért felel. Megértettem, melyik feladat melyik részhez tartozik. Az `if` szerkezetben a kapcsos zárójelek elhagyhatók, ha az adott ágban egyetlen utasítás van. A fajl beolvasás alapjai C#-ben
 
+
+- Név: Nagy Nándor
+- Miben kértem segítséget: A konzolos felület, a kurzormozgatás, a szabadkézi rajzolás, a határellenőrzés és a menürendszer felépítésének és működésének átgondolásában, a felmerülő hibák javításában, valamint a kód áttekintésében és strukturálásában. Ehhez nemcsak AI-t, hanem egy programozó tanár segítségét is vettem.
+
