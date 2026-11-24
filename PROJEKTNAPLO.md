@@ -20,7 +20,7 @@
 | 2026. 11. 18. | Nagy Nándor | A konzolos rajzolóprogram menüje | Levente készítse el a hozzá tartozó logikai kódot. Commit: `109bfff`. |
 | 2026. 11. 22. | Jákób Levente | Az alapvető működés átgondolása és megértése. Az AI segítségével felmértem a kiinduló lépéseket és a kívánt végeredményt. | A menüfunkciók megírása és a szövegfájl betöltése. Commit nem készült. |
 | 2026. 11. 23. | Jákób Levente | A menüfunkciók ellenőrzése és tesztelése, a fájlbeolvasás elkészítése és tesztelése, valamint a mozgás módosítása. Nándor adott egy kész kódot a mozgáshoz. Ezt eleinte nehezen értettem, ezért az AI segítségével tanulmányoztam, majd a saját tudásom alapján elkészítettem a megoldásomat. | Az F1–F3 billentyűk működése, a kód felosztása, a projektnapló első változata és az AI-használat leírása (`4b0f541`). Kereszt, négyzetkeret és rombusz rajzolása, valamint a projektnapló kiegészítése (`5294f0b`). |
-
+| 2026. 11. 24. | Nagy Nándor | **1. Konzolos felület kialakítása:** bal oldali menü és állapotpanel, jobb oldali rajzlap (legalább a képernyő 2/3-a), látható kurzor megjelenítése.<br>**2. Kurzor és rajzolás:** mozgás a nyilakkal, eszköz felemelése és letétele szóközzel, szabadkézi rajzolás a kiválasztott karakterrel, rajzlap határainak ellenőrzése (hibánál Beep).<br>**3. Menürendszer:** rajzkarakter és rajzszín kiválasztása, menü megnyitása, bezárása és kezelése, állapotjelzés (pozíció, karakter, szín, eszköz állapota). | 1. Felület: bal panel, min. 2/3-os rajzlap, kurzor.<br>2. Kurzor/rajzolás: nyilas mozgás, szóközös eszközváltás, szabadkézi rajz, határnál Beep.<br>3. Menü: karakter/szín választás, menükezelés, állapotkijelzés. |
 
 ## Másik pár tesztje
 
